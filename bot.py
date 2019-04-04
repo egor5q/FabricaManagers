@@ -416,7 +416,7 @@ def createuser(user):
             'forest':forest,
             'ore':{}
         },
-        'units':units
+        'units':units,
         'money':0,
         'fabricalvl':1,
         'distances':{

@@ -36,7 +36,8 @@ def start(m):
             tutorial=1
         user=users.find_one({'id':m.from_user.id})
         if tutorial==1:
-            bot.send_message(m.chat.id, 'Добывай ресурсы, строй механизмы на своей фабрике, шпионь, кради ресурсы у других!')
+            bot.send_message(m.chat.id, 'Добывай ресурсы, строй механизмы на своей фабрике, шпионь, кради ресурсы у других, и участвуй в '+
+                            'ежедневных битвах роботов!')
         mainmenu(user)
     
 
@@ -91,6 +92,9 @@ def messages(m):
                 
             if m.text=='⚒Стройка: нефть':
                 buildmenu(user, 'oil')
+                
+            if m.text=='🚚Транспортировка ресурсов':
+                transportmenu(user)
     
     
 @bot.callback_query_handler(func=lambda call:True)
@@ -129,6 +133,16 @@ def inline(call):
             
     if call.data=='close':
         medit('Меню закрыто.', call.message.chat.id, call.message.message_id, reply_markup=kb)
+    
+    
+def transportmenu(user):
+    alltransport=[]
+    for ids in user['units']:
+        if user['units'][ids]['type']=='transport':
+            alltransport.append(user['units'][ids])
+    for ids in alltransport:
+        pass
+    
     
     
 def addres(res, amount):
@@ -187,7 +201,26 @@ def aboutme(user):
     text+='Уровень главной фабрики: '+str(user['fabricalvl'])+'\n'
     return text
     
-    
+  
+def createunit(user, unit):
+    speed=60            # km/h
+    typee=None
+    if unit=='truck':
+        typee:'transport'
+    count=1
+    for ids in user['units']:
+        if unit in ids:
+            count+=1
+    return {unit+str(count):{
+        'name':unit,
+        'speed':speed,
+        'capacity':1000,
+        'type':typee,
+        'number':count
+    }
+           }
+
+
 def build(building, user, place, built, time=None):   # if built==False, time required
     count=1
     for ids in user['buildings'][place]:
@@ -270,7 +303,7 @@ def addresource(building, user):
     
     
 def createuser(user):
-    summ=40     # Сколько всего км будет распределено между всеми ресурсными точками
+    summ=80     # Сколько всего км будет распределено между всеми ресурсными точками
     d_oil=random.randint(0,summ)
     summ-=d_oil
     d_forest=random.randint(0,summ)
@@ -282,6 +315,8 @@ def createuser(user):
     oil.update(build('oilfarmer', user, 'oil', True))
     forest.update(build('stock', user, 'forest', True))
     forest.update(build('forestcutter', user, 'forest', True))
+    units={}
+    units.update(createunit(user, 'truck'))
     return {
         'id':user.id,
         'name':user.first_name,
@@ -292,6 +327,7 @@ def createuser(user):
             'forest':forest,
             'ore':{}
         },
+        'units':units
         'money':0,
         'fabricalvl':1,
         'distances':{
@@ -304,7 +340,7 @@ def createuser(user):
     
 def mainmenu(user):
     kb=types.ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(types.KeyboardButton('❓Обо мне'), types.KeyboardButton('👷‍♂️Месторождения ресурсов'))
+    kb.add(types.KeyboardButton('❓Обо мне'), types.KeyboardButton('👷‍♂️Месторождения ресурсов'), types.KeyboardButton('🚚Транспортировка ресурсов'))
     bot.send_message(user['id'], '🏡Главное меню.', reply_markup=kb)
  
 def medit(message_text,chat_id, message_id,reply_markup=None,parse_mode=None):

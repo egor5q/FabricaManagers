@@ -436,7 +436,10 @@ def createuser(user):
 def mainmenu(user):
     kb=types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(types.KeyboardButton('❓Обо мне'), types.KeyboardButton('👷‍♂️Месторождения ресурсов'), types.KeyboardButton('🚚Транспортировка ресурсов'))
-    bot.send_message(user['id'], '🏡Главное меню.', reply_markup=kb)
+    try:
+        bot.send_message(user['id'], '🏡Главное меню.', reply_markup=kb)
+    except:
+        bot.send_message(user.id, '🏡Главное меню.', reply_markup=kb)
  
 def medit(message_text,chat_id, message_id,reply_markup=None,parse_mode=None):
     return bot.edit_message_text(chat_id=chat_id,message_id=message_id,text=message_text,reply_markup=reply_markup,

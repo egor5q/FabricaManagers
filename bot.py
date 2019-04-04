@@ -48,9 +48,9 @@ def addresourcestoworld(m):
             resource=m.text.split(' ')[1]
             amount=int(m.text.split(' ')[2])
             try:
-                world.update_one({},{'$inc':{resource:amount}})
+                world.update_one({},{'$inc':{'res.'+resource:amount}})
             except:
-                world.update_one({},{'$set':{resource:amount}})
+                world.update_one({},{'$set':{'res.'resource:amount}})
             current=world.find_one({})[resource]
             bot.send_message(m.chat.id, 'Мировой ресурс "'+resource+'" увеличен на '+str(amount)+'! Текущее количество: '+str(current)+'.')
         except Exception as e:
@@ -399,11 +399,11 @@ def addresource(building, user):
     
 def createuser(user):
     summ=80     # Сколько всего км будет распределено между всеми ресурсными точками
-    d_oil=random.randint(0,summ)
-    summ-=d_oil
-    d_forest=random.randint(0,summ)
+    d_ore=random.randint(1,summ)
+    summ-=d_ore
+    d_forest=random.randint(1,summ)
     summ-=d_forest
-    d_ore=summ
+    d_oil=summ
     oil={}
     forest={}
     oil.update(build('stock', user, 'oil', True))

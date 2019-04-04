@@ -274,7 +274,7 @@ def createunit(user, unit):
     speed=60            # km/h
     typee=None
     if unit=='truck':
-        typee:'transport'
+        typee='transport'
     count=1
     try:
         for ids in user['units']:

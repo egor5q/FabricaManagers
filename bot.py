@@ -39,9 +39,26 @@ def start(m):
             bot.send_message(m.chat.id, 'Добывай ресурсы, строй механизмы на своей фабрике, шпионь, кради ресурсы у других!')
         mainmenu(user)
     
+
+@bot.message_handler(commands=['world_addres'])
+def addresourcestoworld(m):
+    if m.from_user.id==441399484:
+        try:
+            resource=m.text.split(' ')[1]
+            amount=int(m.text.split(' ')[2])
+            try:
+                world.update_one({},{'$inc':{resource:amount}})
+            except:
+                world.update_one({},{'$set':{resource:amount}})
+            current=world.find_one({})[resource]
+            bot.send_message(m.chat.id, 'Мировой ресурс "'+resource+'" увеличен на '+str(amount)+'! Текущее количество: '+str(current)+'.')
+        except Exception as e:
+            bot.send_message(441399484, traceback.format_exc())
+    
     
 @bot.message_handler()
 def messages(m):
+    kb=types.ReplyKeyboardMarkup(resize_keyboard=True)
     if m.from_user.id==m.chat.id:
         try:
             user=users.find_one({'id':m.from_user.id})
@@ -63,11 +80,45 @@ def messages(m):
                     if user['buildings'][ids]['place']=='oil':
                         builds=True
                 if builds==False:
-                    text+='У вас здесь ещё нет склада.'
-                else:
-                    text+='Ваши постройки здесь:\n'
-                    text+=buildingslist(user, 'oil')
-                    text+='\n'
+                    text+='У вас здесь ещё нет строений.\n'
+                
+                text+='Ваши постройки здесь:\n'
+                text+=buildingslist(user, 'oil')
+                text+='\n'
+                kb.add(types.KeyboardButton('⚒Стройка: нефть'))
+                kb.add(types.KeyboardButton('🏢Главное меню'))
+                bot.send_message(m.chat.id, text, reply_markup=kb)
+                
+            if m.text=='⚒Стройка: нефть':
+                buildmenu(user, 'oil')
+    
+    
+@bot.callback_query_handler(func=lambda call:True)
+def inline(call):
+    kb=types.InlineKeyboardMarkup()
+    if 'info' in call.data:
+        if 'stock' in call.data:
+            text=buildinginfo('stock')
+            kb.add(types.InlineKeyboardButton(text='🔨Построить', callback_data='build stock '+call.data.split(' ')[2]))
+            kb.add(types.InlineKeyboardButton(text='Закрыть меню', callback_data='close'))
+            medit(text, call.message.chat.id, call.message.message_id, reply_markup=kb)
+    if call.data=='close':
+        medit('Меню закрыто.', call.message.chat.id, call.message.message_id, reply_markup=kb)
+    
+    
+def buildinginfo(b):
+    text='Неизвестно'
+    if b=='stock':
+        text='На склад поступают все ресурсы с месторождений. Чтобы ресурсы можно было использовать, их нужно отвезти со '+\
+        'склада на вашу главную фабрику. Время перевозки зависит от расстояния между двумя точками.\n\n'
+        text+='Характеристики строения:\n'
+        text+='Вместимость: 1000 ед. любых ресурсов\n'
+        text+='📦Требуемые ресурсы:\n'
+        text+='  Доски: 100 000\n'
+        text+='  Железо: 40 000\n'
+        text+='  ⏰Время: 6ч.\n'
+    return text
+        
     
     
 def buildingslist(user, recource):
@@ -76,6 +127,15 @@ def buildingslist(user, recource):
     return text
     
 
+def buildmenu(user, resource):
+    kb=types.InlineKeyboardMarkup()
+    str1=[]
+    str1.append(types.InlineKeyboardButton(text='Склад', callback_data='info stock '+resource))
+    str1.append(types.KeyboardButton(text='Нефтяная вышка', callback_data='info oilfarmer '+resource))
+    kb.add(*str1)
+    bot.send_message(user['id'], 'Выберите строение для просмотра информации.', reply_markup=kb)
+    
+    
 
 def recource_fields(user):
     kb=types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -217,6 +277,10 @@ def mainmenu(user):
     kb.add(types.KeyboardButton('❓Обо мне'), types.KeyboardButton('👷‍♂️Месторождения ресурсов'))
     bot.send_message(user['id'], '🏡Главное меню.', reply_markup=kb)
  
+def medit(message_text,chat_id, message_id,reply_markup=None,parse_mode=None):
+    return bot.edit_message_text(chat_id=chat_id,message_id=message_id,text=message_text,reply_markup=reply_markup,
+                                 parse_mode=parse_mode)  
+
 
 def timecheck():
     t=threading.Timer(60, timecheck)

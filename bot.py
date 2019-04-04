@@ -96,9 +96,9 @@ def aboutme(user):
     return text
     
     
-def build(x, user):
+def build(x, user, place):
     count=1
-    for ids in user['buildings']:
+    for ids in user['buildings'][place]:
         if x in ids:
             count+=1
     gentime=10               # В минутах
@@ -108,12 +108,19 @@ def build(x, user):
         gentime=0
     else:
         capacity=100
+    if x=='oilfarmer':
+        place='oil'
+    if x=='forestcutter':
+        place='forest'
     return {x+str(count):{
         'items':{},
         'lvl':1,
         'capacity':capacity,
         'generate_time':gentime,
-        'amount':amount
+        'amount':amount,
+        'lastgen':None,
+        'name':x,
+        'place':place
     }
                }
 
@@ -135,6 +142,29 @@ def resource_ru(x):
     return 'Неизвестный ресурс'
     
     
+def addresource(building, user):
+    error=25             # Погрешность добычи ресурса (в %).
+    place=building['place']
+    if building=='oilfarmer':
+        resource='oil'
+    elif building=='forestcutter':
+        resource='wood'
+    amount=building['amount']
+    if random.randint(1,100)<=50:
+        amount-=amount*random.randint(0, error)
+    else:
+        amount+=amount*random.randint(0, error)
+    for ids in user['buildings'][place]:
+        bld=user['buildings'][place][ids]
+        if bld['name']=='stock':
+            pass
+    try:
+        users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+stock+'.'+resource:amount}})
+    except:
+        users.update_one({'id':user['id']},{'$set':{'resources.'+resource:amount}})
+        
+    
+    
 def createuser(user):
     summ=40     # Сколько всего км будет распределено между всеми ресурсными точками
     d_oil=random.randint(0,summ)
@@ -144,10 +174,10 @@ def createuser(user):
     d_ore=summ
     oil={}
     forest={}
-    oil.update(build('stock'))
-    oil.update(build('oilfarmer'))
-    forest.update(build('stock'))
-    forest.update(build('forestcutter'))
+    oil.update(build('stock'), user, 'oil')
+    oil.update(build('oilfarmer', user, 'oil'))
+    forest.update(build('stock', user, 'forest'))
+    forest.update(build('forestcutter', user, 'forest'))
     return {
         'id':user.id,
         'name':user.first_name,
@@ -172,7 +202,67 @@ def mainmenu(user):
     kb=types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(types.KeyboardButton('❓Обо мне'), types.KeyboardButton('👷‍♂️Месторождения ресурсов'))
     bot.send_message(user['id'], '🏡Главное меню.', reply_markup=kb)
+ 
+
+def timecheck():
+    t=threading.Timer(60, timecheck)
+    t.start()
+    x=time.ctime()
+    x=x.split(" ")
+    month=0
+    year=0
+    ind=0
+    num=0
+    for ids in x:
+       for idss in ids:
+          if idss==':':
+             tru=ids
+             ind=num
+       num+=1
+    day=x[ind-1]
+    month=x[1]
+    year=x[ind+1]
+    x=tru 
+    x=x.split(":")  
+    minute=int(x[1])    # минуты
+    hour=int(x[0])+3  # часы (+3, потому что heroku в Великобритании)
+    z=time.ctime()
+    z=z.split(' ')
+    u=users.find({})
+    for ids in u:
+        cuser=users.find_one({'id':ids['id']})
+        for idss in cuser['buildings']:
+            for idsss in cuser['buildings'][idss]:
+                building=cuser['buildings'][idss][idsss]
+                settime=building['lastgen']
+                a=settime.split(" ")
+                ind=0
+                num=0
+                for idss in a:
+                for idsss in idss:
+                    if idsss==':':
+                        trua=idss
+                        ind=num
+                num+=1
+                cday=a[ind-1]
+                cmonth=a[1]
+                cyear=a[ind+1]
+                a=trua
+                a=a.split(":")  
+                chour=int(a[0])+3
+                cminute=int(a[1])
+                
+                if minute-cminute>=building['generate_time']:
+                    addresource(building, cuser)
+                    
+                elif hour-chour>=1:
+                    if minute+(60-cminute)>=building['generate_time']:
+                        addresource(building, cuser)
+                        
+                elif cday!=day or cmonth!=month or cyear!=year:
+                    addresource(building, cuser)
     
+
     
     
 print('7777')

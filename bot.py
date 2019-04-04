@@ -95,6 +95,9 @@ def messages(m):
                 
             if m.text=='🚚Транспортировка ресурсов':
                 transportmenu(user)
+                
+        except Exception as e:
+            bot.send_message(441399484, traceback.format_exc())
     
     
 @bot.callback_query_handler(func=lambda call:True)

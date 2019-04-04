@@ -234,6 +234,7 @@ def unitinfo(unit):
     
     
 def buildingslist(user, recource):
+    text=''
     for ids in user['buildings'][recource]:
         text+=building_ru(ids)+'\n'
     return text

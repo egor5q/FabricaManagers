@@ -114,6 +114,7 @@ def inline(call):
             unit=call.data.split(' ')[1]
             text=unitinfo(user['units'][unit])
             kb.add(types.InlineKeyboardButton(text='Отправить за ресурсами', callback_data='sendto '+unit))
+            medit(text, call.message.chat.id, call.message.message_id)
             
     if 'sendto' in call.data:
         unit=call.data.split(' ')[1]

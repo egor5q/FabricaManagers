@@ -136,6 +136,8 @@ def inline(call):
         if user['units'][unit]['status']=='free':
             sendto(user, unit, to)
             medit('Транспорт отправлен!', call.message.chat.id, call.message.message_id)
+        else:
+            medit('Этот транспорт занят!', call.message.chat.id, call.message.message_id)
             
     if 'build' in call.data:
         if 'stock' in call.data:
@@ -165,6 +167,7 @@ def inline(call):
     
     
 def sendto(user, unit, to):
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit+'.status':'busy'}})
     timee=round((user['units'][unit]['speed']/user['distances'][to])*2, 2)
     timee=timee*3600
     inv=[]
@@ -182,6 +185,7 @@ def sendto(user, unit, to):
                         users.update_one({'id':user['id']},{'$inc':{'buildings.'+to+'.'+building['name']+building['number']+'.items.'+ids:-c}})
     users.update_one({'id':user['id']},{'$set':{'units.'+unit+'.deliver_time':time.time()+timee}})
     users.update_one({'id':user['id']},{'$set':{'units.'+unit+'.inventory':inv}})
+    
         
     
     
@@ -340,7 +344,7 @@ def units_ru(unit):
     return 'Неизвестный юнит'
                                               
                                               
-places_ru(x):
+def places_ru(x):
     if x=='oil':
         return 'Нефть'
     if x=='forest':
@@ -452,6 +456,7 @@ def finishdelivery(user, unit):
                     idss:ids[idss]
                 })
     users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+unit['number']+'.inventory':[]}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+unit['number']+'.status':'free'}})
     return allres
             
 

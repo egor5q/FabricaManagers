@@ -108,6 +108,32 @@ def inline(call):
             kb.add(types.InlineKeyboardButton(text='Закрыть меню', callback_data='close'))
             medit(text, call.message.chat.id, call.message.message_id, reply_markup=kb)
             
+        if 'truck' in call.data:
+            unit=call.data.split(' ')[1]
+            text=unitinfo(user['units'][unit])
+            kb.add(types.InlineKeyboardButton(text='Отправить за ресурсами', callback_data='sendto '+unit))
+            
+    if 'sendto' in call.data:
+        unit=call.data.split(' ')[1]
+        places=['oil', 'forest', 'ores']
+        oil_time=round((user['units'][unit]['speed']/user['distances']['oil'])*2, 2)
+        forest_time=round((user['units'][unit]['speed']/user['distances']['forest'])*2, 2)
+        ores_time=round((user['units'][unit]['speed']/user['distances']['ores'])*2, 2)
+        for ids in places:
+            kb.add(types.InlineKeyboardButton(text=fields_ru(ids), callback_data='send '+unit+' '+ids))
+        medit('Выберите, куда отправить транспорт. Он заберёт столько ресурсов со склада, сколько уместится.\n'+
+                         'Примерное время доставки от точек:\n'+
+                        '  Нефть: '+str(oil_time)+' час(ов)\n'+
+                        '  Лес: '+str(forest_time)+' час(ов)\n'+
+                        '  Руды: '+str(ores_time)+' час(ов)\n', call.message.chat.id, call.message.message_id, reply_markup=kb)
+        
+    if 'send' in call.data:
+        unit=call.data.split(' ')[1]
+        to=call.data.split(' ')[2]
+        if user['units'][unit]['status']=='free':
+            sendto(user, unit, to)
+            medit('Транспорт отправлен!', call.message.chat.id, call.message.message_id)
+            
     if 'build' in call.data:
         if 'stock' in call.data:
             resources={}
@@ -135,16 +161,44 @@ def inline(call):
         medit('Меню закрыто.', call.message.chat.id, call.message.message_id, reply_markup=kb)
     
     
+def sendto(user, unit, to):
+    timee=round((user['units'][unit]['speed']/user['distances'][to])*2, 2)
+    timee=timee*3600
+    inv=[]
+    count=0
+    for ids in user['buildings'][to]:
+        building=user['buildings'][to][ids]
+        if building['name']=='stock':
+            for ids in building['items']:
+                c=building['items'][ids]
+                if count+c>user['units'][unit]['capacity']:
+                    c=user['units'][unit]['capacity']-count
+                    if c!=0:
+                        inv.append({ids:c})
+                        count+=c
+                        users.update_one({'id':user['id']},{'$inc':{'buildings.'+to+'.'+building['name']+building['number']+'.items.'+ids:-c}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit+'.deliver_time':time.time()+timee}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit+'.inventory':inv}})
+        
+    
+    
+    
 def transportmenu(user):
+    text='Здесь находится весь ваш свободный транспорт. Он нужен для того, чтобы перевозить ресурсы со складов на главную фабрику. Нажмите кнопку '+\
+    'для просмотра информации.'
     alltransport=[]
+    kb=types.InlineKeyboardMarkup()
     for ids in user['units']:
-        if user['units'][ids]['type']=='transport':
-            alltransport.append(user['units'][ids])
+        unit=user['units'][ids]
+        if unit['type']=='transport' and unit['status']=='free':
+            alltransport.append(unit)
     for ids in alltransport:
-        pass
+        kb.add(types.InlineKeyboardButton(text=units_ru(ids['name']), callback_data='info '+unit['name']+unit['number']))
+    kb.add(types.InlineKeyboardButton(text='Закрыть меню', callback_data='close'))
+    bot.send_message(user['id'], text, reply_markup=kb)
     
-    
-    
+                                            
+                                             
 def addres(res, amount):
     return {
         res:{'amount':amount
@@ -164,6 +218,13 @@ def buildinginfo(b):
         text+='  ⏰Время: 6ч.\n'
     return text
         
+    
+def unitinfo(unit):
+    text=unit['name']+':\n'
+    if unit['type']=='transport':
+        text+='Скорость: '+str(unit['speed'])+' км/ч\n'
+        text+='Вместимость: '+str(unit['capacity'])+'\n'
+    return text
     
     
 def buildingslist(user, recource):
@@ -216,7 +277,10 @@ def createunit(user, unit):
         'speed':speed,
         'capacity':1000,
         'type':typee,
-        'number':count
+        'number':count,
+        'status':'free',
+        'inventory':[],
+        'deliver_time':None    # Время, когда ресурсы из inventory попадут на общий склад.
     }
            }
 
@@ -259,12 +323,30 @@ def building_ru(x):
     
     return 'Неизвестное строение'
 
-
+                                    
+                                              
 def resource_ru(x):
     if x=='oil':
         return 'Нефть'
     return 'Неизвестный ресурс'
     
+                                              
+def units_ru(unit):
+    if unit=='truck':
+        return 'Грузовик'
+    return 'Неизвестный юнит'
+                                              
+                                              
+places_ru(x):
+    if x=='oil':
+        return 'Нефть'
+    if x=='forest':
+        return 'Лес'
+    if x=='ores':
+        return 'Шахта'
+    return 'Неизвестное место'
+        
+                                              
     
 def addresource(building, user):
     error=25             # Погрешность добычи ресурса (в %).
@@ -352,6 +434,23 @@ def finishbuild(user, building):
     users.update_one({'id':user['id']},{'$set':{path+'.built':True, path+'.buildtime':None}})
     bot.send_message(user['id'], 'Строение "'+building_ru(building['name'])+'": стройка завершена!')
 
+def finishdelivery(user, unit):
+    allres={}
+    for ids in unit['inventory']:
+        for idss in ids:
+            try:
+                users.update_one({'id':user['id']},{'$inc':{'resources.'+idss:ids[idss]}})
+            except:
+                users.update_one({'id':user['id']},{'$set':{'resources.'+idss:ids[idss]}})
+            try:
+                allres[idss]+=ids[idss]
+            except:
+                allres.update({
+                    idss:ids[idss]
+                })
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+unit['number']+'.inventory':[]}})
+    return allres
+            
 
 def timecheck():
     t=threading.Timer(60, timecheck)
@@ -376,7 +475,17 @@ def timecheck():
                     if timee>=ctime:
                         finishbuild(cuser, building)
                     
-                    
+        for idss in cuser['units']:
+            unit=cuser['units'][idss]
+            if unit['type']=='transport':
+                ctime=unit['buildtime']
+                if ctime!=None:
+                    if timee>=ctime:
+                        text=''
+                        resources=finishdelivery(cuser, unit)
+                        for ids in resources:
+                            text+=resource_ru(ids)+': '+str(resources[ids])+'\n'
+                        bot.send_message(cuser['id'], 'Ваш транспорт приехал! Полученные ресурсы:\n'+text)
                         
   
     

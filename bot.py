@@ -119,7 +119,7 @@ def inline(call):
                 nores=True
                 
             if nores==False:
-                b=build(stock, user, place, False, time=360) 
+                b=build(stock, user, place, False, time=21600) 
                 for ids in resources:
                     users.update_one({'id':user['id']},{'$inc':{'resources.'ids:-resources[ids]['amount']}})
                 users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+b['name']+str(b['number']):b}})
@@ -193,7 +193,7 @@ def build(building, user, place, built, time=None):   # if built==False, time re
     for ids in user['buildings'][place]:
         if building in ids:
             count+=1
-    gentime=10               # В минутах
+    gentime=600               # В секундах
     amount=10                # Кол-во ресурса
     if building=='stock':
         capacity=1000
@@ -205,14 +205,13 @@ def build(building, user, place, built, time=None):   # if built==False, time re
         'lvl':1,
         'capacity':capacity,
         'generate_time':gentime,
-        'amount':amount,                 # Генерация ресурса
-        'lastgen':None,
+        'amount':amount,                 # Добываемое кол-во ресурса
+        'nextgen':None,                  # Время следующей добычи ресурса (в unix)
         'name':building,
         'number':count,
         'place':place,
         'built':built,
-        'buildtime':time,
-        'createtime':time.ctime()
+        'buildtime':time                 # unix - когда строение будет построено
     }
                }
 
@@ -238,9 +237,9 @@ def addresource(building, user):
     error=25             # Погрешность добычи ресурса (в %).
     place=building['place']
     w=world.find_one({})
-    if building=='oilfarmer':
+    if building['name']=='oilfarmer':
         resource='oil'
-    elif building=='forestcutter':
+    elif building['name']=='forestcutter':
         resource='wood'
     amount=building['amount']
     if random.randint(1,100)<=50:
@@ -266,6 +265,7 @@ def addresource(building, user):
             users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
         except:
             users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
+        users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+building['name']+building['number']+'.nextgen':int(time.time())+building['generate_time']}})
         
     
     
@@ -311,31 +311,16 @@ def medit(message_text,chat_id, message_id,reply_markup=None,parse_mode=None):
     return bot.edit_message_text(chat_id=chat_id,message_id=message_id,text=message_text,reply_markup=reply_markup,
                                  parse_mode=parse_mode)  
 
+def finishbuild(user, building):
+    path='buildings.'+building['place']+'.'+building['name']+building['number']
+    users.update_one({'id':user['id']},{'$set':{path+'.built':True, path+'.buildtime':None}})
+    bot.send_message(user['id'], 'Строение "'+building_ru(building['name'])+'": стройка завершена!')
+
 
 def timecheck():
     t=threading.Timer(60, timecheck)
     t.start()
-    x=time.ctime()
-    x=x.split(" ")
-    month=0
-    year=0
-    ind=0
-    num=0
-    for ids in x:
-       for idss in ids:
-          if idss==':':
-             tru=ids
-             ind=num
-       num+=1
-    day=x[ind-1]
-    month=x[1]
-    year=x[ind+1]
-    x=tru 
-    x=x.split(":")  
-    minute=int(x[1])    # минуты
-    hour=int(x[0])+3  # часы (+3, потому что heroku в Великобритании)
-    z=time.ctime()
-    z=z.split(' ')
+    timee=int(time.time())
     u=users.find({})
     for ids in u:
         cuser=users.find_one({'id':ids['id']})
@@ -343,35 +328,21 @@ def timecheck():
             for idsss in cuser['buildings'][idss]:
                 building=cuser['buildings'][idss][idsss]
                 if building['built']==True:
-                    settime=building['lastgen']
-                    a=settime.split(" ")
-                    ind=0
-                    num=0
-                    for idss in a:
-                    for idsss in idss:
-                        if idsss==':':
-                            trua=idss
-                            ind=num
-                    num+=1
-                    cday=a[ind-1]
-                    cmonth=a[1]
-                    cyear=a[ind+1]
-                    a=trua
-                    a=a.split(":")  
-                    chour=int(a[0])+3
-                    cminute=int(a[1])
-                    
-                    if minute-cminute>=building['generate_time']:
+                    ctime=building['lastgen']
+                    if ctime!=None:
+                        if timee>=ctime:
+                            addresource(building, cuser)
+                    else:
                         addresource(building, cuser)
                         
-                    elif hour-chour>=1:
-                        if minute+(60-cminute)>=building['generate_time']:
-                            addresource(building, cuser)
-                            
-                    elif cday!=day or cmonth!=month or cyear!=year:
-                        addresource(building, cuser)
-    
-
+                else:
+                    ctime=building['buildtime']
+                    if timee>=ctime:
+                        finishbuild(cuser, building)
+                    
+                    
+                        
+  
     
     
 print('7777')

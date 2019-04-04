@@ -199,7 +199,7 @@ def transportmenu(user):
         if unit['type']=='transport' and unit['status']=='free':
             alltransport.append(unit)
     for ids in alltransport:
-        kb.add(types.InlineKeyboardButton(text=units_ru(ids['name']), callback_data='info '+unit['name']+unit['number']))
+        kb.add(types.InlineKeyboardButton(text=units_ru(ids['name']), callback_data='info '+unit['name']+str(unit['number'])))
     kb.add(types.InlineKeyboardButton(text='Закрыть меню', callback_data='close'))
     bot.send_message(user['id'], text, reply_markup=kb)
     

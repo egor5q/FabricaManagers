@@ -154,7 +154,7 @@ def inline(call):
             if nores==False:
                 b=build(stock, user, place, False, time=21600) 
                 for ids in resources:
-                    users.update_one({'id':user['id']},{'$inc':{'resources.'ids:-resources[ids]['amount']}})
+                    users.update_one({'id':user['id']},{'$inc':{'resources.'+ids:-resources[ids]['amount']}})
                 users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+b['name']+str(b['number']):b}})
                 medit('Вы начали постройку склада! Стройка закончится примерно через 6 часов.', call.message.chat.id, call.message.message_id)
             else:

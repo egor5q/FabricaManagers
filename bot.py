@@ -114,7 +114,7 @@ def inline(call):
             unit=call.data.split(' ')[1]
             text=unitinfo(user['units'][unit])
             kb.add(types.InlineKeyboardButton(text='Отправить за ресурсами', callback_data='sendto '+unit))
-            medit(text, call.message.chat.id, call.message.message_id)
+            medit(text, call.message.chat.id, call.message.message_id, reply_markup=kb)
             
     if 'sendto' in call.data:
         unit=call.data.split(' ')[1]
@@ -227,7 +227,7 @@ def buildinginfo(b):
         
     
 def unitinfo(unit):
-    text=unit['name']+':\n'
+    text=unit_ru(unit['name'])+':\n'
     if unit['type']=='transport':
         text+='Скорость: '+str(unit['speed'])+' км/ч\n'
         text+='Вместимость: '+str(unit['capacity'])+'\n'
@@ -345,7 +345,7 @@ def resource_ru(x):
     return 'Неизвестный ресурс'
     
                                               
-def units_ru(unit):
+def unit_ru(unit):
     if unit=='truck':
         return 'Грузовик'
     return 'Неизвестный юнит'

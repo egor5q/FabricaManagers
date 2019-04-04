@@ -396,7 +396,7 @@ def addresource(building, user):
             users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
         except:
             users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
-        users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+building['name']+building['number']+'.nextgen':int(time.time())+building['generate_time']}})
+        users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+building['name']+str(building['number'])+'.nextgen':int(time.time())+building['generate_time']}})
         world.update_one({},{'$inc':{'res.'+resource:-amount}})
         
     

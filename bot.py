@@ -374,8 +374,11 @@ def addresource(building, user):
         amount-=amount*random.randint(0, error)
     else:
         amount+=amount*random.randint(0, error)
-    if w['resources'][resource]<amount:
-        amount=w['resources'][resource]
+    try:
+        if w['res'][resource]<amount:
+            amount=w['resources'][resource]
+    except:
+        return False
     stocks=[]
     for ids in user['buildings'][place]:
         bld=user['buildings'][place][ids]

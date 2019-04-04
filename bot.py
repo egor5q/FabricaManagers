@@ -276,9 +276,12 @@ def createunit(user, unit):
     if unit=='truck':
         typee:'transport'
     count=1
-    for ids in user['units']:
-        if unit in ids:
-            count+=1
+    try:
+        for ids in user['units']:
+            if unit in ids:
+                count+=1
+    except:
+        pass
     return {unit+str(count):{
         'name':unit,
         'speed':speed,
@@ -294,9 +297,12 @@ def createunit(user, unit):
 
 def build(building, user, place, built, time=None):   # if built==False, time required
     count=1
-    for ids in user['buildings'][place]:
-        if building in ids:
-            count+=1
+    try:
+        for ids in user['buildings'][place]:
+            if building in ids:
+                count+=1
+    except:
+        pass
     gentime=600               # В секундах
     amount=10                # Кол-во ресурса
     if building=='stock':

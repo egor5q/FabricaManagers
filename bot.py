@@ -481,7 +481,7 @@ def timecheck():
             for idsss in cuser['buildings'][idss]:
                 building=cuser['buildings'][idss][idsss]
                 if building['built']==True:
-                    ctime=building['lastgen']
+                    ctime=building['nextgen']
                     if ctime!=None:
                         if timee>=ctime:
                             addresource(building, cuser)

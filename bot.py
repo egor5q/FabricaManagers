@@ -51,7 +51,7 @@ def addresourcestoworld(m):
                 world.update_one({},{'$inc':{'res.'+resource:amount}})
             except:
                 world.update_one({},{'$set':{'res.'+resource:amount}})
-            current=world.find_one({})[resource]
+            current=world.find_one({})['res'][resource]
             bot.send_message(m.chat.id, 'Мировой ресурс "'+resource+'" увеличен на '+str(amount)+'! Текущее количество: '+str(current)+'.')
         except Exception as e:
             bot.send_message(441399484, traceback.format_exc())

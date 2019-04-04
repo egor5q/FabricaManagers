@@ -107,6 +107,7 @@ def inline(call):
     if 'build' in call.data:
         if 'stock' in call.data:
             resources={}
+            place=call.data.split(' ')[2]
             resources.update(addres('wood', 100000))
             resources.update(addres('iron', 40000))
             nores=Faslse
@@ -118,7 +119,11 @@ def inline(call):
                 nores=True
                 
             if nores==False:
-                pass # Build building
+                b=build(stock, user, place, False, time=360) 
+                for ids in resources:
+                    users.update_one({'id':user['id']},{'$inc':{'resources.'ids:-resources[ids]['amount']}})
+                users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+b['name']+str(b['number']):b}})
+                medit('Вы начали постройку склада! Стройка закончится примерно через 6 часов.', call.message.chat.id, call.message.message_id)
             else:
                 medit('Не хватает ресурсов!', call.message.chat.id, call.message.message_id)
             
@@ -183,34 +188,31 @@ def aboutme(user):
     return text
     
     
-def build(x, user, place, built, time=None):   # if built==False, time required
+def build(building, user, place, built, time=None):   # if built==False, time required
     count=1
     for ids in user['buildings'][place]:
-        if x in ids:
+        if building in ids:
             count+=1
     gentime=10               # В минутах
     amount=10                # Кол-во ресурса
-    if x=='stock':
+    if building=='stock':
         capacity=1000
         gentime=0
     else:
         capacity=100
-    if x=='oilfarmer':
-        place='oil'
-    if x=='forestcutter':
-        place='forest'
-    return {x+str(count):{
+    return {building+str(count):{
         'items':{},
         'lvl':1,
         'capacity':capacity,
         'generate_time':gentime,
         'amount':amount,                 # Генерация ресурса
         'lastgen':None,
-        'name':x,
+        'name':building,
         'number':count,
         'place':place,
         'built':built,
-        'buildtime':time
+        'buildtime':time,
+        'createtime':time.ctime()
     }
                }
 
@@ -279,7 +281,7 @@ def createuser(user):
     oil.update(build('stock'), user, 'oil', True)
     oil.update(build('oilfarmer', user, 'oil', True))
     forest.update(build('stock', user, 'forest', True))
-    forest.update(build('forestcutter', user, 'forest'))
+    forest.update(build('forestcutter', user, 'forest', True))
     return {
         'id':user.id,
         'name':user.first_name,
@@ -340,33 +342,34 @@ def timecheck():
         for idss in cuser['buildings']:
             for idsss in cuser['buildings'][idss]:
                 building=cuser['buildings'][idss][idsss]
-                settime=building['lastgen']
-                a=settime.split(" ")
-                ind=0
-                num=0
-                for idss in a:
-                for idsss in idss:
-                    if idsss==':':
-                        trua=idss
-                        ind=num
-                num+=1
-                cday=a[ind-1]
-                cmonth=a[1]
-                cyear=a[ind+1]
-                a=trua
-                a=a.split(":")  
-                chour=int(a[0])+3
-                cminute=int(a[1])
-                
-                if minute-cminute>=building['generate_time']:
-                    addresource(building, cuser)
+                if building['built']==True:
+                    settime=building['lastgen']
+                    a=settime.split(" ")
+                    ind=0
+                    num=0
+                    for idss in a:
+                    for idsss in idss:
+                        if idsss==':':
+                            trua=idss
+                            ind=num
+                    num+=1
+                    cday=a[ind-1]
+                    cmonth=a[1]
+                    cyear=a[ind+1]
+                    a=trua
+                    a=a.split(":")  
+                    chour=int(a[0])+3
+                    cminute=int(a[1])
                     
-                elif hour-chour>=1:
-                    if minute+(60-cminute)>=building['generate_time']:
+                    if minute-cminute>=building['generate_time']:
                         addresource(building, cuser)
                         
-                elif cday!=day or cmonth!=month or cyear!=year:
-                    addresource(building, cuser)
+                    elif hour-chour>=1:
+                        if minute+(60-cminute)>=building['generate_time']:
+                            addresource(building, cuser)
+                            
+                    elif cday!=day or cmonth!=month or cyear!=year:
+                        addresource(building, cuser)
     
 
     

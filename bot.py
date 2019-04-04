@@ -144,7 +144,7 @@ def inline(call):
             place=call.data.split(' ')[2]
             resources.update(addres('wood', 100000))
             resources.update(addres('iron', 40000))
-            nores=Faslse
+            nores=False
             try:
                 for ids in resources:
                     if user['resources'][ids]<resources[ids]:

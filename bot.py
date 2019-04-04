@@ -77,15 +77,14 @@ def messages(m):
                 distance=user['distances']['oil']
                 text='Из нефти делается топливо для любых видов техники. Ближайшее месторождение нефти находится в '+str(distance)+' км от вашей фабрики.\n'
                 builds=False
-                for ids in user['buildings']:
-                    if user['buildings'][ids]['place']=='oil':
-                        builds=True
+                for if len(user['buildings']['oil'])>0:
+                    builds=True
                 if builds==False:
                     text+='У вас здесь ещё нет строений.\n'
-                
-                text+='Ваши постройки здесь:\n'
-                text+=buildingslist(user, 'oil')
-                text+='\n'
+                else:
+                    text+='Ваши постройки здесь:\n'
+                    text+=buildingslist(user, 'oil')
+                    text+='\n'
                 kb.add(types.KeyboardButton('⚒Стройка: нефть'))
                 kb.add(types.KeyboardButton('🏢Главное меню'))
                 bot.send_message(m.chat.id, text, reply_markup=kb)

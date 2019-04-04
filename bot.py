@@ -77,7 +77,7 @@ def messages(m):
                 distance=user['distances']['oil']
                 text='Из нефти делается топливо для любых видов техники. Ближайшее месторождение нефти находится в '+str(distance)+' км от вашей фабрики.\n'
                 builds=False
-                for if len(user['buildings']['oil'])>0:
+                if len(user['buildings']['oil'])>0:
                     builds=True
                 if builds==False:
                     text+='У вас здесь ещё нет строений.\n'

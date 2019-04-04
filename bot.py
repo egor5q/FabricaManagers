@@ -123,7 +123,7 @@ def inline(call):
         forest_time=round((user['units'][unit]['speed']/user['distances']['forest'])*2, 2)
         ores_time=round((user['units'][unit]['speed']/user['distances']['ore'])*2, 2)
         for ids in places:
-            kb.add(types.InlineKeyboardButton(text=fields_ru(ids), callback_data='send '+unit+' '+ids))
+            kb.add(types.InlineKeyboardButton(text=field_ru(ids), callback_data='send '+unit+' '+ids))
         medit('Выберите, куда отправить транспорт. Он заберёт столько ресурсов со склада, сколько уместится.\n'+
                          'Примерное время доставки от точек:\n'+
                         '  Нефть: '+str(oil_time)+' час(ов)\n'+
@@ -351,7 +351,7 @@ def unit_ru(unit):
     return 'Неизвестный юнит'
                                               
                                               
-def places_ru(x):
+def field_ru(x):
     if x=='oil':
         return 'Нефть'
     if x=='forest':

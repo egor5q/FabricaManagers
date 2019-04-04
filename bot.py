@@ -17,6 +17,7 @@ bot = telebot.TeleBot(token)
 client=MongoClient(os.environ['database'])
 db=client.fabricamanagers
 users=db.users
+world=db.world
 
 
 try:
@@ -117,9 +118,10 @@ def build(x, user, place):
         'lvl':1,
         'capacity':capacity,
         'generate_time':gentime,
-        'amount':amount,
+        'amount':amount,                 # Генерация ресурса
         'lastgen':None,
         'name':x,
+        'number':count,
         'place':place
     }
                }
@@ -145,6 +147,7 @@ def resource_ru(x):
 def addresource(building, user):
     error=25             # Погрешность добычи ресурса (в %).
     place=building['place']
+    w=world.find_one({})
     if building=='oilfarmer':
         resource='oil'
     elif building=='forestcutter':
@@ -154,14 +157,25 @@ def addresource(building, user):
         amount-=amount*random.randint(0, error)
     else:
         amount+=amount*random.randint(0, error)
+    if w['resources'][resource]<amount:
+        amount=w['resources'][resource]
+    stocks=[]
     for ids in user['buildings'][place]:
         bld=user['buildings'][place][ids]
         if bld['name']=='stock':
-            pass
-    try:
-        users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+stock+'.'+resource:amount}})
-    except:
-        users.update_one({'id':user['id']},{'$set':{'resources.'+resource:amount}})
+            stocks.append(bld)
+    currentstock=None
+    for ids in stocks:
+        count=0
+        for idss in ids['items']:
+            count+=ids['items'][idss]
+        if count+amount<=ids['capacity']:
+            currentstock=ids['name']+ids['number']
+    if currentstock!=None:
+        try:
+            users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
+        except:
+            users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
         
     
     

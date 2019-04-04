@@ -95,6 +95,7 @@ def messages(m):
     
 @bot.callback_query_handler(func=lambda call:True)
 def inline(call):
+    user=users.find_one({'id':call.from_user.id})
     kb=types.InlineKeyboardMarkup()
     if 'info' in call.data:
         if 'stock' in call.data:
@@ -102,9 +103,34 @@ def inline(call):
             kb.add(types.InlineKeyboardButton(text='🔨Построить', callback_data='build stock '+call.data.split(' ')[2]))
             kb.add(types.InlineKeyboardButton(text='Закрыть меню', callback_data='close'))
             medit(text, call.message.chat.id, call.message.message_id, reply_markup=kb)
+            
+    if 'build' in call.data:
+        if 'stock' in call.data:
+            resources={}
+            resources.update(addres('wood', 100000))
+            resources.update(addres('iron', 40000))
+            nores=Faslse
+            try:
+                for ids in resources:
+                    if user['resources'][ids]<resources[ids]:
+                        nores=True
+            except:
+                nores=True
+                
+            if nores==False:
+                pass # Build building
+            else:
+                medit('Не хватает ресурсов!', call.message.chat.id, call.message.message_id)
+            
     if call.data=='close':
         medit('Меню закрыто.', call.message.chat.id, call.message.message_id, reply_markup=kb)
     
+    
+def addres(res, amount):
+    return {
+        res:{'amount':amount
+            }
+    }
     
 def buildinginfo(b):
     text='Неизвестно'
@@ -157,7 +183,7 @@ def aboutme(user):
     return text
     
     
-def build(x, user, place):
+def build(x, user, place, built, time=None):   # if built==False, time required
     count=1
     for ids in user['buildings'][place]:
         if x in ids:
@@ -182,7 +208,9 @@ def build(x, user, place):
         'lastgen':None,
         'name':x,
         'number':count,
-        'place':place
+        'place':place,
+        'built':built,
+        'buildtime':time
     }
                }
 
@@ -248,9 +276,9 @@ def createuser(user):
     d_ore=summ
     oil={}
     forest={}
-    oil.update(build('stock'), user, 'oil')
-    oil.update(build('oilfarmer', user, 'oil'))
-    forest.update(build('stock', user, 'forest'))
+    oil.update(build('stock'), user, 'oil', True)
+    oil.update(build('oilfarmer', user, 'oil', True))
+    forest.update(build('stock', user, 'forest', True))
     forest.update(build('forestcutter', user, 'forest'))
     return {
         'id':user.id,

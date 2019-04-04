@@ -390,7 +390,7 @@ def addresource(building, user):
         for idss in ids['items']:
             count+=ids['items'][idss]
         if count+amount<=ids['capacity']:
-            currentstock=ids['name']+ids['number']
+            currentstock=ids['name']+str(ids['number'])
     if currentstock!=None:
         try:
             users.update_one({'id':user['id']},{'$inc':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})

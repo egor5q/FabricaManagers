@@ -400,7 +400,7 @@ def createuser(user):
     d_ore=summ
     oil={}
     forest={}
-    oil.update(build('stock'), user, 'oil', True)
+    oil.update(build('stock', user, 'oil', True))
     oil.update(build('oilfarmer', user, 'oil', True))
     forest.update(build('stock', user, 'forest', True))
     forest.update(build('forestcutter', user, 'forest', True))

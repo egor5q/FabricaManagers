@@ -394,6 +394,7 @@ def addresource(building, user):
         except:
             users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+currentstock+'.'+'items.'+resource:amount}})
         users.update_one({'id':user['id']},{'$set':{'buildings.'+place+'.'+building['name']+building['number']+'.nextgen':int(time.time())+building['generate_time']}})
+        world.update_one({},{'$inc':{'res.'+resource:-amount}})
         
     
     
@@ -506,6 +507,7 @@ def timecheck():
                         
   
     
+timecheck()
     
 print('7777')
 bot.polling(none_stop=True,timeout=600)

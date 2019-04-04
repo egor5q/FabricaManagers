@@ -244,7 +244,7 @@ def buildmenu(user, resource):
     kb=types.InlineKeyboardMarkup()
     str1=[]
     str1.append(types.InlineKeyboardButton(text='Склад', callback_data='info stock '+resource))
-    str1.append(types.KeyboardButton(text='Нефтяная вышка', callback_data='info oilfarmer '+resource))
+    str1.append(types.InlineKeyboardButton(text='Нефтяная вышка', callback_data='info oilfarmer '+resource))
     kb.add(*str1)
     bot.send_message(user['id'], 'Выберите строение для просмотра информации.', reply_markup=kb)
     

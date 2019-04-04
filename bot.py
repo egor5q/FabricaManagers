@@ -499,7 +499,7 @@ def timecheck():
         for idss in cuser['units']:
             unit=cuser['units'][idss]
             if unit['type']=='transport':
-                ctime=unit['buildtime']
+                ctime=unit['deliver_time']
                 if ctime!=None:
                     if timee>=ctime:
                         text=''

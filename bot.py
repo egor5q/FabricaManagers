@@ -119,9 +119,9 @@ def inline(call):
     if 'sendto' in call.data:
         unit=call.data.split(' ')[1]
         places=['oil', 'forest', 'ores']
-        oil_time=round((user['units'][unit]['speed']/user['distances']['oil'])*2, 2)
-        forest_time=round((user['units'][unit]['speed']/user['distances']['forest'])*2, 2)
-        ores_time=round((user['units'][unit]['speed']/user['distances']['ore'])*2, 2)
+        oil_time=round((user['distances']['oil']/user['units'][unit]['speed'])*2, 2)
+        forest_time=round((user['distances']['forest']/user['units'][unit]['speed'])*2, 2)
+        ores_time=round((user['distances']['ore']/user['units'][unit]['speed'])*2, 2)
         for ids in places:
             kb.add(types.InlineKeyboardButton(text=field_ru(ids), callback_data='send '+unit+' '+ids))
         medit('Выберите, куда отправить транспорт. Он заберёт столько ресурсов со склада, сколько уместится.\n'+

@@ -371,9 +371,9 @@ def addresource(building, user):
         resource='wood'
     amount=building['amount']
     if random.randint(1,100)<=50:
-        amount-=amount*random.randint(0, error)
+        amount-=amount*(random.randint(0, error)/100)
     else:
-        amount+=amount*random.randint(0, error)
+        amount+=amount*(random.randint(0, error)/100)
     try:
         if w['res'][resource]<amount:
             amount=w['resources'][resource]

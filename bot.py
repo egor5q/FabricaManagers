@@ -130,7 +130,7 @@ def inline(call):
                         '  Лес: '+str(forest_time)+' час(ов)\n'+
                         '  Руды: '+str(ores_time)+' час(ов)\n', call.message.chat.id, call.message.message_id, reply_markup=kb)
         
-    if 'send' in call.data:
+    if 'send ' in call.data:
         unit=call.data.split(' ')[1]
         to=call.data.split(' ')[2]
         if user['units'][unit]['status']=='free':

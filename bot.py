@@ -483,8 +483,8 @@ def finishdelivery(user, unit):
                 allres.update({
                     idss:ids[idss]
                 })
-    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+unit['number']+'.inventory':[]}})
-    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+unit['number']+'.status':'free'}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.inventory':[]}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.status':'free'}})
     return allres
             
 

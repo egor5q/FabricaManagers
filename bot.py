@@ -32,12 +32,11 @@ def resetunits(m):
     if m.from_user.id==441399484:
         u=users.find({})
         for ids in u:
-            for idss in u[ids]['units']:
-                unit=u[ids]['units'][idss]
-                if unit['type']=='transport':
-                    users.update_one({'id':u[ids]['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.status':'free'}})
-                    users.update_one({'id':u[ids]['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.items':[]}})
-                    users.update_one({'id':u[ids]['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.deliver_time':None}})
+            for idss in ids['units']:
+                unit=ids['units'][idss]
+                users.update_one({'id':ids['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.status':'free'}})
+                users.update_one({'id':ids['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.items':[]}})
+                users.update_one({'id':ids['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.deliver_time':None}})
         bot.send_message(m.chat.id, 'ready')
                 
     
@@ -485,6 +484,7 @@ def finishdelivery(user, unit):
                 })
     users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.inventory':[]}})
     users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.status':'free'}})
+    users.update_one({'id':user['id']},{'$set':{'units.'+unit['name']+str(unit['number'])+'.deliver_time':None}})
     return allres
             
 
